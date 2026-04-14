@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>DANZX BUG V3 - NEON</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #0a0c12;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #eef2ff;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* EFEK NEON */
+        .login-card, .tool-card, .bug-profile-card, .stat-card, .video-list-sub, 
+        .music-player-card, .music-item, .quran-item, .game-container, .setting-container,
+        .custom-select, .input-group, .attack-btn, .login-btn, .video-option-sub,
+        .wa-chat-body, .message-ai, .quick-chat-btn, .color-btn {
+            box-shadow: 0 0 5px rgba(255,59,74,0.3), 0 0 10px rgba(255,59,74,0.2);
+            transition: all 0.3s ease;
+        }
+        .login-card:hover, .tool-card:hover, .music-item:hover, .quran-item:hover {
+            box-shadow: 0 0 15px rgba(255,59,74,0.6), 0 0 25px rgba(255,59,74,0.4);
+            transform: scale(1.01);
+        }
+        
+        /* SPLASH SCREEN */
+        .splash-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #000;
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .splash-video-wrapper {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .splash-video-wrapper iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        /* HALAMAN LOGIN */
+        .login-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            background: linear-gradient(145deg, #0e1018 0%, #07090f 100%);
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .login-card {
+            width: 100%;
+            background: rgba(18, 22, 32, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 48px;
+            padding: 32px 24px 40px;
+            border: 1px solid rgba(255, 59, 74, 0.5);
+            box-shadow: 0 0 15px rgba(255,59,74,0.4);
+        }
+        .login-profile { display: flex; justify-content: center; margin-bottom: 20px; }
+        .login-profile-img {
+            width: 100px; height: 100px; border-radius: 50%; object-fit: cover;
+            border: 3px solid #ff3b4a; box-shadow: 0 0 25px rgba(255,59,74,0.7);
+        }
+        .catalyst-title {
+            text-align: center; font-size: 28px; font-weight: 800;
+            background: linear-gradient(135deg, #ff8a96, #ff3b4a, #c72a3a);
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+            margin-bottom: 28px;
+            text-shadow: 0 0 10px rgba(255,59,74,0.5);
+        }
+        .input-login-group { margin-bottom: 20px; }
+        .input-login-group label { display: block; font-size: 13px; color: #8f9bb3; margin-bottom: 8px; }
+        .input-login-group input {
+            width: 100%; background: rgba(10,12,18,0.8); border: 1px solid #ff3b4a;
+            border-radius: 60px; padding: 14px 20px; font-size: 15px; color: white; outline: none;
+            box-shadow: 0 0 5px rgba(255,59,74,0.3);
+        }
+        .input-login-group input:focus { border-color: #ff3b4a; box-shadow: 0 0 15px rgba(255,59,74,0.6); }
+        .login-btn {
+            width: 100%; background: linear-gradient(95deg, #ff3b4a, #c72a3a);
+            border: none; padding: 14px; border-radius: 60px; font-weight: 800;
+            font-size: 18px; color: white; cursor: pointer; margin: 16px 0 20px;
+            box-shadow: 0 0 15px rgba(255,59,74,0.5);
+        }
+        .login-btn:active { transform: scale(0.97); }
+        .error-msg {
+            background: rgba(255,59,74,0.2); border: 1px solid #ff3b4a; border-radius: 60px;
+            padding: 10px; text-align: center; font-size: 12px; color: #ff8a96;
+            margin-bottom: 16px; display: none;
+        }
+        
+        /* APP UTAMA */
+        .app-container {
+            display: flex; flex-direction: column; height: 100%; width: 100%;
+            max-width: 500px; margin: 0 auto; background: rgba(10,12,18,0.96);
+            border-left: 1px solid rgba(255,255,255,0.05);
+            border-right: 1px solid rgba(255,255,255,0.05);
+        }
+        .page-content { flex: 1; overflow-y: auto; padding: 0 16px 80px 16px; }
+        
+        /* DASHBOARD HEADER BARU DENGAN ICON SVG */
+        .dashboard-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            background: rgba(5, 7, 12, 0.6);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .menu-icon {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .menu-icon:hover {
+            background: rgba(255,59,74,0.2);
+            transform: scale(1.05);
+        }
+        .welcome-text {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #FFFFFF 0%, #b0c4ff 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .header-icons {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .header-icon {
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .header-icon:hover {
+            background: rgba(255,59,74,0.2);
+            transform: scale(1.05);
+        }
+        
+        /* SIDEBAR DARI KIRI - NUTUP SETENGAH LAYAR */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100%;
+            background: rgba(8, 10, 18, 0.98);
+            backdrop-filter: blur(15px);
+            z-index: 1500;
+            transition: left 0.3s ease;
+            border-right: 1px solid rgba(255,59,74,0.3);
+            box-shadow: 5px 0 25px rgba(0,0,0,0.5);
+        }
+        .sidebar.open {
+            left: 0;
+        }
+        .sidebar-header {
+            padding: 30px 20px;
+            border-bottom: 1px solid rgba(255,59,74,0.2);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .sidebar-header svg {
+            width: 60px;
+            height: 60px;
+            stroke: #ff3b4a;
+        }
+        .sidebar-menu {
+            padding: 0 20px;
+        }
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 0;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.2s;
+        }
+        .sidebar-item:hover {
+            transform: translateX(5px);
+            color: #ff8a96;
+        }
+        .sidebar-item svg {
+            width: 24px;
+            height: 24px;
+            stroke: currentColor;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1400;
+            display: none;
+        }
+        .overlay.show {
+            display: block;
+        }
+        
+        /* BERANDA */
+        .profile-section { display: flex; justify-content: center; margin: 16px 0; }
+        .profile-photo { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #ff3b4a; box-shadow: 0 0 15px rgba(255,59,74,0.5); }
+        .stats-grid { display: flex; gap: 16px; margin: 16px 0; }
+        .stat-card { background: rgba(18,22,32,0.7); border-radius: 24px; padding: 14px; flex: 1; text-align: center; border: 1px solid rgba(255,59,74,0.4); }
+        .stat-value { font-size: 26px; font-weight: 800; }
+        .stat-label { font-size: 11px; color: #7f8b9f; margin-top: 6px; }
+        .carousel-container { display: flex; gap: 12px; overflow-x: auto; margin: 16px 0; padding: 4px 0; scroll-snap-type: x mandatory; }
+        .carousel-item { position: relative; flex-shrink: 0; scroll-snap-align: start; width: 280px; }
+        .carousel-img { width: 100%; border-radius: 20px; aspect-ratio: 16/9; object-fit: cover; display: block; border: 1px solid #ff3b4a; }
+        .carousel-caption { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0.6), transparent); color: white; text-align: center; padding: 14px 8px 8px; border-radius: 0 0 20px 20px; font-size: 12px; font-weight: bold; }
+        .carousel-caption span { font-size: 10px; font-weight: normal; color: #ffb6c1; }
+        .account-stats { background: rgba(12,15,24,0.6); border-radius: 24px; padding: 16px; margin: 16px 0; border: 1px solid rgba(255,59,74,0.3); }
+        .acc-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
+        .acc-label { color: #8f9bb3; }
+        .expire-badge { background: #2a2f3f; border-radius: 30px; padding: 4px 12px; font-size: 12px; color: #b9fbc0; }
+        
+        /* BUG PAGE */
+        .bug-profile-card { display: flex; align-items: center; gap: 16px; background: rgba(18,22,32,0.7); border-radius: 28px; padding: 16px; margin: 16px 0; border: 1px solid rgba(255,59,74,0.4); }
+        .bug-profile-img { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 2px solid #ff5c6e; box-shadow: 0 0 15px rgba(255,92,110,0.5); }
+        .bug-store-name { font-size: 20px; font-weight: 800; background: linear-gradient(135deg, #ff8a96, #ff3b4a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .video-wrapper { position: relative; margin: 12px 0; border-radius: 28px; overflow: hidden; background: #000; border: 1px solid #ff3b4a; }
+        .video-anime { width: 100%; aspect-ratio: 16/9; }
+        .video-anime iframe { width: 100%; height: 100%; border: none; }
+        .sound-btn { position: absolute; bottom: 12px; right: 12px; background: rgba(0,0,0,0.7); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid #ff3b4a; }
+        .bug-form { display: flex; flex-direction: column; align-items: center; gap: 18px; margin: 20px 0; }
+        .input-group { width: 100%; max-width: 320px; background: rgba(22,26,36,0.9); border-radius: 60px; padding: 4px 20px; display: flex; border: 1px solid #ff3b4a; }
+        .input-group input { background: transparent; border: none; padding: 16px 8px; color: white; width: 100%; outline: none; }
+        .custom-select { width: 100%; max-width: 320px; background: rgba(22,26,36,0.9); border-radius: 60px; padding: 14px 20px; border: 1px solid #ff3b4a; display: flex; justify-content: space-between; cursor: pointer; }
+        .select-options { position: absolute; background: rgba(18,22,32,0.98); border-radius: 20px; border: 1px solid #ff5c6e; max-height: 200px; overflow-y: auto; display: none; width: 100%; z-index: 100; }
+        .select-options.show { display: block; }
+        .select-option { padding: 12px 20px; cursor: pointer; }
+        .select-option:hover { background: rgba(255,59,74,0.2); }
+        .bug-select-wrapper { position: relative; width: 100%; max-width: 320px; }
+        .attack-btn { background: linear-gradient(95deg, #ff3b4a, #c72a3a); border: none; padding: 14px 32px; border-radius: 60px; font-weight: 800; font-size: 18px; color: white; width: 260px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 0 15px rgba(255,59,74,0.5); }
+        .toast-msg { background: #1e1e2f; padding: 10px 20px; border-radius: 60px; font-size: 13px; margin-top: 8px; display: none; }
+        
+        /* TOOLS PAGE - 7 KOTAK */
+        .tools-container-v3 { padding: 20px 0; display: flex; flex-direction: column; gap: 16px; }
+        .tools-row { display: flex; flex-direction: row; gap: 16px; justify-content: center; }
+        .tool-card { background: rgba(18,22,32,0.7); border-radius: 28px; padding: 20px 12px; text-align: center; cursor: pointer; transition: all 0.2s; border: 1px solid rgba(255,59,74,0.4); flex: 1; }
+        .tool-card:hover { transform: scale(1.02); border-color: #ff3b4a; background: rgba(255,59,74,0.1); box-shadow: 0 0 20px rgba(255,59,74,0.5); }
+        .tool-icon { width: 50px; height: 50px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; }
+        .tool-icon svg { width: 40px; height: 40px; }
+        .tool-title { font-size: 12px; font-weight: 700; margin-top: 6px; color: #eef2ff; }
+        
+        /* SUB PAGE UMUM */
+        .sub-page-container { display: flex; flex-direction: column; height: 100%; background: rgba(10,12,18,0.96); max-width: 500px; margin: 0 auto; }
+        .sub-header { padding: 16px; background: rgba(5,7,12,0.9); display: flex; align-items: center; gap: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .back-btn { background: rgba(255,59,74,0.2); border: none; color: #ff8a96; font-size: 24px; cursor: pointer; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 5px rgba(255,59,74,0.3); }
+        .sub-title { font-size: 18px; font-weight: 600; }
+        .sub-content { flex: 1; overflow-y: auto; padding: 16px; }
+        
+        /* PILIH VIDEO SUB PAGE */
+        .video-list-sub { background: rgba(18,22,32,0.7); border-radius: 28px; padding: 20px; border: 1px solid rgba(255,59,74,0.4); }
+        .video-grid-sub { display: flex; flex-direction: column; gap: 12px; }
+        .video-option-sub { background: rgba(22,26,36,0.9); border-radius: 60px; padding: 14px 20px; display: flex; justify-content: space-between; cursor: pointer; border: 1px solid #ff3b4a; }
+        
+        /* AI CHAT */
+        .wa-chat-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+        .message-user { align-self: flex-end; background: linear-gradient(135deg, #ff3b4a, #c72a3a); padding: 12px 18px; border-radius: 24px 24px 8px 24px; max-width: 80%; font-size: 14px; box-shadow: 0 0 10px rgba(255,59,74,0.4); }
+        .message-ai { align-self: flex-start; background: rgba(22,26,36,0.9); padding: 12px 18px; border-radius: 24px 24px 24px 8px; max-width: 80%; font-size: 14px; border: 1px solid rgba(255,59,74,0.4); }
+        .quick-buttons-wa-chat { display: flex; flex-wrap: wrap; gap: 10px; padding: 16px; background: rgba(5,7,12,0.6); border-top: 1px solid rgba(255,255,255,0.08); }
+        .quick-chat-btn { background: rgba(255,59,74,0.15); border: 1px solid rgba(255,59,74,0.3); border-radius: 40px; padding: 10px 16px; font-size: 12px; color: #ff8a96; cursor: pointer; }
+        
+        /* SETTING WARNA */
+        .setting-container { padding: 20px; border: 1px solid rgba(255,59,74,0.3); border-radius: 28px; margin: 16px; }
+        .color-options { display: flex; gap: 16px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+        .color-btn { width: 50px; height: 50px; border-radius: 50%; cursor: pointer; border: 2px solid white; box-shadow: 0 0 10px rgba(255,255,255,0.3); }
+        .color-red { background: #ff3b4a; }
+        .color-blue { background: #3b82f6; }
+        .color-green { background: #22c55e; }
+        .color-purple { background: #a855f7; }
+        .color-cyan { background: #06b6d4; }
+        
+        /* MUSIC PLAYER */
+        .music-player-card { background: rgba(18,22,32,0.9); border-radius: 20px; padding: 16px; margin-bottom: 20px; border: 1px solid rgba(255,59,74,0.4); }
+        .music-cover { border-radius: 16px; overflow: hidden; margin-bottom: 12px; }
+        .music-cover iframe { width: 100%; aspect-ratio: 16/9; border: none; }
+        .music-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+        .music-artist { font-size: 12px; color: #8f9bb3; margin-bottom: 12px; }
+        .music-duration { display: flex; justify-content: space-between; font-size: 11px; color: #8f9bb3; margin-bottom: 6px; }
+        .progress-bar { width: 100%; height: 4px; background: #2f3545; border-radius: 4px; overflow: hidden; cursor: pointer; }
+        .progress-fill { width: 0%; height: 100%; background: #ff3b4a; border-radius: 4px; box-shadow: 0 0 5px #ff3b4a; }
+        .music-controls { display: flex; justify-content: center; gap: 24px; margin-top: 12px; }
+        .control-btn { background: rgba(255,59,74,0.2); border: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; font-size: 18px; box-shadow: 0 0 5px rgba(255,59,74,0.3); }
+        .warning-note { background: rgba(255,59,74,0.2); border: 1px solid #ff3b4a; border-radius: 20px; padding: 12px; margin-bottom: 16px; text-align: center; font-size: 12px; color: #ff8a96; }
+        .search-box { margin-bottom: 16px; }
+        .search-input { width: 100%; background: rgba(22,26,36,0.9); border: 1px solid #ff3b4a; border-radius: 60px; padding: 12px 20px; color: white; font-size: 14px; outline: none; }
+        .music-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+        .music-item { background: rgba(18,22,32,0.9); border-radius: 60px; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid rgba(255,59,74,0.4); transition: all 0.2s; }
+        .music-item:hover { border-color: #ff3b4a; background: rgba(255,59,74,0.2); box-shadow: 0 0 15px rgba(255,59,74,0.4); }
+        .music-num { width: 30px; height: 30px; background: #ff3b4a; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; box-shadow: 0 0 5px #ff3b4a; }
+        
+        /* GAMES */
+        .game-container { text-align: center; padding: 20px; border: 1px solid rgba(255,59,74,0.3); border-radius: 28px; margin: 16px; }
+        .game-number { font-size: 48px; font-weight: 800; background: rgba(255,59,74,0.2); padding: 20px; border-radius: 20px; margin: 20px 0; border: 1px solid #ff3b4a; }
+        .game-input { width: 150px; padding: 12px; border-radius: 60px; border: 1px solid #ff3b4a; background: rgba(22,26,36,0.9); color: white; text-align: center; font-size: 18px; margin: 10px; }
+        .game-btn { background: linear-gradient(95deg, #ff3b4a, #c72a3a); border: none; padding: 12px 24px; border-radius: 60px; color: white; cursor: pointer; margin: 10px; box-shadow: 0 0 10px rgba(255,59,74,0.4); }
+        .game-message { margin-top: 20px; padding: 12px; border-radius: 20px; background: rgba(18,22,32,0.7); }
+        .score { font-size: 18px; margin-bottom: 20px; color: #ff8a96; }
+        
+        /* AL-QURAN */
+        .quran-list { display: flex; flex-direction: column; gap: 12px; }
+        .quran-item { background: rgba(18,22,32,0.9); border-radius: 60px; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid rgba(255,59,74,0.4); }
+      .quran-item:hover { border-color: #ff3b4a; background: rgba(255,59,74,0.2); box-shadow: 0 0 15px rgba(255,59,74,0.4); }
+        .quran-num { width: 30px; height: 30px; background: #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; }
+        .surah-content { background: rgba(18,22,32,0.8); border-radius: 28px; padding: 20px; margin-top: 16px; border: 1px solid rgba(255,59,74,0.3); }
+        .surah-arab { font-size: 24px; text-align: right; font-family: 'Amiri', 'Traditional Arabic', serif; line-height: 2; margin-bottom: 16px; }
+        .surah-latin { font-size: 14px; color: #b0c4ff; margin-bottom: 12px; font-style: italic; }
+        .surah-arti { font-size: 12px; color: #8f9bb3; }
+        
+        /* BOTTOM NAV */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; max-width: 500px; margin: 0 auto; background: rgba(8,10,18,0.98); border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-around; padding: 10px 16px 14px; z-index: 999; }
+        .nav-item { cursor: pointer; padding: 8px 20px; border-radius: 40px; }
+        .nav-item.active { background: rgba(255,59,74,0.2); box-shadow: 0 0 10px rgba(255,59,74,0.3); }
+        .nav-item svg { width: 26px; height: 26px; stroke: #9ca3af; stroke-width: 1.8; fill: none; }
+        .nav-item.active svg { stroke: #ff6b7c; }
+        
+        .page { display: none; }
+        .page.active-page { display: block; }
+        .hidden { display: none; }
+        .sub-page { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000; }
+        .sub-page.active-sub { display: block; }
+    </style>
+</head>
+<body>
+
+<!-- HALAMAN LOGIN -->
+<div id="loginPage" class="login-container">
+    <div class="login-card">
+        <div class="login-profile">
+            <img class="login-profile-img" src="https://i.ibb.co.com/HTSCJrrz/IMG-20260401-192807-857.png" alt="profile">
+        </div>
+        <div class="catalyst-title">DANZX BUG V3</div>
+        <div id="loginError" class="error-msg"></div>
+        <div class="input-login-group">
+            <label>Username</label>
+            <input type="text" id="loginUsername" placeholder="Username">
+        </div>
+        <div class="input-login-group">
+            <label>Password</label>
+            <input type="password" id="loginPassword" placeholder="Password">
+        </div>
+        <button class="login-btn" id="loginBtn">LOGIN</button>
+    </div>
+</div>
+
+<!-- VIDEO SPLASH -->
+<div id="splashPage" class="splash-container hidden">
+    <div class="splash-video-wrapper">
+        <iframe id="splashVideo" src="https://www.youtube.com/embed/0OTVTXkbMVI?autoplay=1&mute=0&controls=0&modestbranding=1&rel=0&playlist=0OTVTXkbMVI&loop=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    </div>
+</div>
+
+<!-- OVERLAY -->
+<div id="overlay" class="overlay"></div>
+
+<!-- SIDEBAR DARI KIRI -->
+<div id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="8" r="4"/>
+            <path d="M5.5 20v-2a5 5 0 0 1 5-5h3a5 5 0 0 1 5 5v2"/>
+        </svg>
+    </div>
+    <div class="sidebar-menu">
+        <div class="sidebar-item" id="sidebarLogoutBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            <span>LOGOUT</span>
+        </div>
+    </div>
+</div>
+
+<!-- APP UTAMA -->
+<div id="appPage" class="app-container hidden">
+    <div class="dashboard-header">
+        <div class="menu-icon" id="menuIcon">
+            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none">
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </div>
+        <span class="welcome-text">DANZX BUG V3</span>
+        <div class="header-icons">
+            <div class="header-icon" id="notifIcon">
+                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+            </div>
+            <div class="header-icon" id="profileIcon">
+                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+                    <circle cx="12" cy="8" r="4"/>
+                    <path d="M5.5 20v-2a5 5 0 0 1 5-5h3a5 5 0 0 1 5 5v2"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div id="homePage" class="page active-page">
+            <div class="profile-section"><img class="profile-photo" src="https://i.ibb.co.com/HTSCJrrz/IMG-20260401-192807-857.png"></div>
+            <div class="stats-grid"><div class="stat-card"><div class="stat-value"><span id="onlineUsers">147</span></div><div class="stat-label">ONLINE USERS</div></div><div class="stat-card"><div class="stat-value"><span id="connections">892</span></div><div class="stat-label">CONNECTIONS</div></div></div>
+            <div class="carousel-container">
+                <div class="carousel-item"><img class="carousel-img" src="https://i.ibb.co.com/bjQnLNSL/jujutsu-kaisen-gege-akutami-officially-reveals-a-new-member-of-gojo-clan-1.jpg"><div class="carousel-caption">DANZX BUG<br><span>real developer @DANZX STORE</span></div></div>
+                <div class="carousel-item"><img class="carousel-img" src="https://i.ibb.co.com/kVkTrqnb/Satoru-Gojo.jpg"><div class="carousel-caption">DANZX STORE</div></div>
+                <div class="carousel-item"><img class="carousel-img" src="https://i.ibb.co.com/KpR0j807/satoru-gojo.jpg"><div class="carousel-caption">MAU LEBIH GACOR<br><span>BELI DI DANZX STORE</span></div></div>
+            </div>
+            <div class="account-stats"><div class="acc-row"><span class="acc-label">Username</span><span>Kapot</span></div><div class="acc-row"><span class="acc-label">Role</span><span>OWNER</span></div><div class="acc-row"><span class="acc-label">Expires</span><span class="expire-badge">2053-06-06</span></div></div>
+        </div>
+
+        <div id="bugPage" class="page">
+            <div class="bug-profile-card"><img class="bug-profile-img" src="https://i.ibb.co.com/HTSCJrrz/IMG-20260401-192807-857.png"><div><div class="bug-store-name">DANZX STORE</div><div class="bug-role">role : reseller</div></div></div>
+            <div class="video-wrapper"><div class="video-anime"><iframe id="videoIframe" src="https://www.youtube.com/embed/ILvUOF8R9gk?autoplay=1&mute=1&loop=1&playlist=ILvUOF8R9gk" allow="autoplay; encrypted-media"></iframe></div><div class="sound-btn" id="soundBtn">🔇</div></div>
+            <div class="bug-form">
+                <div class="input-group"><input type="tel" id="targetNumber" placeholder="+62812xxxxxxxxx"></div>
+                <div class="bug-select-wrapper"><div class="custom-select" id="customSelect"><span id="selectedBugText">Bug Nomor [Force Close]</span><span>▼</span></div><div class="select-options" id="selectOptions"><div class="select-option" data-value="Bug Nomor [Force Close]">Bug Nomor [Force Close]</div><div class="select-option" data-value="Bug Group [Delay Exploit]">Bug Group [Delay Exploit]</div><div class="select-option" data-value="Bug Sistem Crash">Bug Sistem Crash</div><div class="select-option" data-value="Bug Ghost Mode">Bug Ghost Mode</div><div class="select-option" data-value="Bug Spam Exploit">Bug Spam Exploit</div></div></div>
+                <button id="attackBtn" class="attack-btn">🚀 KIRIM BUG</button>
+                <div id="resultMsg" class="toast-msg"></div>
+            </div>
+        </div>
+
+        <div id="toolsPage" class="page">
+            <div class="tools-container-v3">
+                <div class="tools-row"><div class="tool-card" id="cardVideoAnime"><div class="tool-icon"><svg viewBox="0 0 24 24" fill="red" stroke="none"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816z"/></svg></div><div class="tool-title">VIDEO ANIME</div></div><div class="tool-card" id="cardAI"><div class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="1.5"><rect x="3" y="8" width="18" height="12" rx="2"/><circle cx="9" cy="13" r="1.5" fill="#00d4ff"/><circle cx="15" cy="13" r="1.5" fill="#00d4ff"/></svg></div><div class="tool-title">AI</div></div></div>
+                <div class="tools-row"><div class="tool-card" id="cardSetting"><div class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div><div class="tool-title">SETTING</div></div><div class="tool-card" id="cardMusic"><div class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div><div class="tool-title">MUSIC</div></div></div>
+                <div class="tools-row"><div class="tool-card" id="cardSpam"><div class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 12v8H4v-8"/><path d="M12 2v10"/><path d="m8 6 4-4 4 4"/></svg></div><div class="tool-title">SPAM</div></div><div class="tool-card" id="cardGames"><div class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M8 12h8"/><path d="M12 8v8"/></svg></div><div class="tool-title">GAMES</div></div><div class="tool-card" id="cardQuran"><div class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16v12H4z"/><path d="M8 10h8"/><path d="M8 14h5"/></svg></div><div class="tool-title">AL-QUR'AN</div></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item" data-page="home"><svg viewBox="0 0 24 24" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2h-5v-8H9v8H5a2 2 0 0 1-2-2z"/></svg></div>
+        <div class="nav-item" data-page="bug"><svg viewBox="0 0 24 24" stroke="currentColor"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+        <div class="nav-item" data-page="tools"><svg viewBox="0 0 24 24" stroke="currentColor"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>
+    </div>
+</div>
+
+<!-- SUB PAGES -->
+<div id="videoSubPage" class="sub-page"><div class="sub-page-container"><div class="sub-header"><button class="back-btn" id="backVideoBtn">←</button><div class="sub-title">PILIH VIDEO ANIME</div></div><div class="sub-content"><div class="video-list-sub"><div class="video-grid-sub"><div class="video-option-sub" data-video="ILvUOF8R9gk"><span>1. Gojo X Royalty</span><span>▶</span></div><div class="video-option-sub" data-video="CY5WLrSYPzo"><span>2. Jujutsu Kaisen 4K</span><span>▶</span></div><div class="video-option-sub" data-video="Ji7NxxG63kA"><span>3. Zenitsu - Royalty</span><span>▶</span></div><div class="video-option-sub" data-video="eq2KUqA-tpA"><span>4. Nanami AMV</span><span>▶</span></div><div class="video-option-sub" data-video="kaVuiHELTVc"><span>5. Toji - Judas</span><span>▶</span></div><div class="video-option-sub" data-video="2kAY4FRBfUI"><span>6. Haikyuu Edit</span><span>▶</span></div><div class="video-option-sub" data-video="amulGhJKMls"><span>7. Video Baru</span><span>▶</span></div><div class="video-option-sub" data-video="Ucc2hmY6fWU"><span>8. Video Baru 2</span><span>▶</span></div></div></div></div></div></div>
+
+<div id="aiSubPage" class="sub-page"><div class="sub-page-container"><div class="sub-header"><button class="back-btn" id="backAiBtn">←</button><div class="sub-title">VERTUX AI</div></div><div class="wa-chat-body" id="waChatBody"><div class="message-ai">Halo! Ada yang bisa saya bantu?</div></div><div class="quick-buttons-wa-chat"><div class="quick-chat-btn" data-msg="bug wa nya tidak berfungsi">BUG WA NYA TIDAK BERFUNGSI</div><div class="quick-chat-btn" data-msg="saya mau beli ai work di mana">SAYA MAU BELI AI WORK DI MANA</div><div class="quick-chat-btn" data-msg="bagaimana cara memakai bug nya">BAGAIMANA CARA MEMAKAI BUG NYA</div></div></div></div>
+
+<div id="settingSubPage" class="sub-page"><div class="sub-page-container"><div class="sub-header"><button class="back-btn" id="backSettingBtn">←</button><div class="sub-title">SETTING WARNA</div></div><div class="setting-container"><div class="color-options"><div class="color-btn color-red" data-color="#ff3b4a"></div><div class="color-btn color-blue" data-color="#3b82f6"></div><div class="color-btn color-green" data-color="#22c55e"></div><div class="color-btn color-purple" data-color="#a855f7"></div><div class="color-btn color-cyan" data-color="#06b6d4"></div></div><div style="text-align:center; margin-top:20px;">Klik warna untuk mengubah tema</div></div></div></div>
+
+<div id="musicSubPage" class="sub-page"><div class="sub-page-container"><div class="sub-header"><button class="back-btn" id="backMusicBtn">←</button><div class="sub-title">🎵 MUSIC</div></div><div class="sub-content"><div class="warning-note">⚠️ MATIKAN SUARA VIDEO DULU SEBELUM PUTAR LAGU ⚠️</div><div class="music-player-card"><div class="music-cover"><iframe id="musicFrame" src="https://www.youtube.com/embed/iduLOx_tJzc?autoplay=1" frameborder="0" allowfullscreen></iframe></div><div class="music-title" id="musicTitle">Dj Breakbeat Atlantis X En Den Dino Remix Full Bass</div><div class="music-artist" id="musicArtist">REYLIMITLESS</div><div class="music-duration"><span id="currentTime">00:00</span><span id="duration">04:14</span></div><div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div><div class="music-controls"><button class="control-btn" id="prevBtn">⏮</button><button class="control-btn" id="playPauseBtn">⏸</button><button class="control-btn" id="nextBtn">⏭</button></div></div><div class="search-box"><input type="text" id="searchYoutube" class="search-input" placeholder="🔍 Cari lagu di YouTube..."></div><div class="music-list"><div class="music-item" data-video="iduLOx_tJzc" data-name="Dj Breakbeat Atlantis X En Den Dino Remix Full Bass" data-artist="REYLIMITLESS"><div class="music-num">1</div><span>Dj Breakbeat Atlantis X En Den Dino</span><span>🎵</span></div><div class="music-item" data-video="3eUQb-Kw_fE" data-name="DJ BABY DON'T GO" data-artist="REYLIMITLESS"><div class="music-num">2</div><span>DJ BABY DON'T GO</span><span>🎵</span></div><div class="music-item" data-video="c8vZCN62Sw4" data-name="DJ KASIH ABA ABA" data-artist="REYLIMITLESS"><div class="music-num">3</div><span>DJ KASIH ABA ABA</span><span>🎵</span></div><div class="music-item" data-video="OK_b2-w0u60" data-name="DJ ISTILAH KATA" data-artist="REYLIMITLESS"><div class="music-num">4</div><span>DJ ISTILAH KATA</span><span>🎵</span></div><div class="music-item" data-video="vSSGYjItsNk" data-name="DJ JANGAN PERNAH" data-artist="REYLIMITLESS"><div class="music-num">5</div><span>DJ JANGAN PERNAH</span><span>🎵</span></div><div class="music-item" data-video="4VVvXjmRk6g" data-name="DJ PELUKAN YANG HANGAT" data-artist="REYLIMITLESS"><div class="music-num">6</div><span>DJ PELUKAN YANG HANGAT</span><span>🎵</span></div><div class="music-item" data-video="5Mc_GdSe55w" data-name="DJ SWEET LOVE X DINASTY 2" data-artist="REYLIMITLESS"><div class="music-num">7</div><span>DJ SWEET LOVE X DINASTY 2</span><span>🎵</span></div><div class="music-item" data-video="vJeDY1t40DU" data-name="DJ TAKUTU DON CAE CAE" data-artist="REYLIMITLESS"><div class="music-num">8</div><span>DJ TAKUTU DON CAE CAE</span><span>🎵</span></div><div class="music-item" data-video="2ZIgUrlFvH8" data-name="DJ PICA PICA TIMUR KEBARAT" data-artist="REYLIMITLESS"><div class="music-num">9</div><span>DJ PICA PICA TIMUR KEBARAT</span><span>🎵</span></div><div class="music-item" data-video="kkTGh8Ym_iI" data-name="DJ AISHITERU 2" data-artist="REYLIMITLESS"><div class="music-num">10</div><span>DJ AISHITERU 2</span><span>🎵</span></div></div></div></div></div>
+
+<div id="gamesSubPage" class="sub-page"><div class="sub-page-container"><div class="sub-header"><button class="back-btn" id="backGamesBtn">←</button><div class="sub-title">🎮 GAMES</div></div><div class="game-container"><div class="score">🏆 Skor: <span id="score">0</span></div><div class="game-number" id="gameNumber">?</div><div class="game-number" style="font-size:24px;">Tebak angka 1-100</div><input type="number" id="guessInput" class="game-input" placeholder="Masukkan angka"><br><button class="game-btn" id="guessBtn">TEBAK</button><button class="game-btn" id="resetGameBtn">RESET</button><div class="game-message" id="gameMessage">Klik tebak untuk mulai!</div></div></div></div>
+
+<div id="quranSubPage" class="sub-page"><div class="sub-page-container"><div class="sub-header"><button class="back-btn" id="backQuranBtn">←</button><div class="sub-title">📖 AL-QUR'AN</div></div><div class="sub-content"><div class="quran-list"><div class="quran-item" data-surah="al-fatihah"><div class="quran-num">1</div><span>Al-Fatihah (Pembukaan)</span><span>📖</span></div><div class="quran-item" data-surah="an-nas"><div class="quran-num">2</div><span>An-Nas (Manusia)</span><span>📖</span></div><div class="quran-item" data-surah="al-falaq"><div class="quran-num">3</div><span>Al-Falaq (Subuh)</span><span>📖</span></div><div class="quran-item" data-surah="al-ikhlas"><div class="quran-num">4</div><span>Al-Ikhlas (Keesaan Allah)</span><span>📖</span></div><div class="quran-item" data-surah="al-kafirun"><div class="quran-num">5</div><span>Al-Kafirun (Orang Kafir)</span><span>📖</span></div></div><div id="surahContent" class="surah-content" style="display:none;"></div></div></div></div>
+
+<script>
+    // LOGIN DENGAN SPLASH VIDEO
+    const loginPage = document.getElementById('loginPage');
+    const splashPage = document.getElementById('splashPage');
+    const appPage = document.getElementById('appPage');
+    const splashVideo = document.getElementById('splashVideo');
+    const loginBtn = document.getElementById('loginBtn');
+    const loginError = document.getElementById('loginError');
+    const loginUsername = document.getElementById('loginUsername');
+    const loginPassword = document.getElementById('loginPassword');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    let splashTimeout;
+
+    loginBtn.onclick = function() {
+        const username = loginUsername.value.trim();
+        const password = loginPassword.value.trim();
+        if (username === "DANZX BUG" && password === "DANZX BUG V2") {
+            loginPage.classList.add('hidden');
+            splashPage.classList.remove('hidden');
+            
+            splashTimeout = setTimeout(function() {
+                splashPage.classList.add('hidden');
+                appPage.classList.remove('hidden');
+                setActivePage('home');
+                splashVideo.src = "";
+            }, 10000);
+        } else {
+            loginError.style.display = 'block';
+            loginError.innerText = 'Username atau Password salah!';
+            setTimeout(function() { loginError.style.display = 'none'; }, 2000);
+        }
+    };
+
+    // SIDEBAR MENU
+    const menuIcon = document.getElementById('menuIcon');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    const sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn');
+    const notifIcon = document.getElementById('notifIcon');
+    const profileIcon = document.getElementById('profileIcon');
+
+    function openSidebar() {
+        sidebar.classList.add('open');
+        overlay.classList.add('show');
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('show');
+    }
+
+    if(menuIcon) {
+        menuIcon.onclick = function(e) {
+            e.stopPropagation();
+            openSidebar();
+        };
+    }
+
+    if(overlay) {
+        overlay.onclick = function() {
+            closeSidebar();
+        };
+    }
+
+    // LOGOUT dari sidebar
+    if(sidebarLogoutBtn) {
+        sidebarLogoutBtn.onclick = function() {
+            closeSidebar();
+            appPage.classList.add('hidden');
+            loginPage.classList.remove('hidden');
+            loginUsername.value = '';
+            loginPassword.value = '';
+            if (splashTimeout) clearTimeout(splashTimeout);
+            hideAllSubPages();
+        };
+    }
+
+    // Notifikasi
+    if(notifIcon) {
+        notifIcon.onclick = function() {
+            showMessage("Belum ada notifikasi", false);
+        };
+    }
+
+    // Profile
+    if(profileIcon) {
+        profileIcon.onclick = function() {
+            showMessage("Profile: DANZX BUG V3", false);
+        };
+    }
+
+    // NAVIGATION
+    const homePage = document.getElementById('homePage');
+    const bugPage = document.getElementById('bugPage');
+    const toolsPage = document.getElementById('toolsPage');
+    const navItems = document.querySelectorAll('.nav-item');
+
+    function setActivePage(pageId) {
+        homePage.classList.remove('active-page');
+        bugPage.classList.remove('active-page');
+        toolsPage.classList.remove('active-page');
+        if (pageId === 'home') homePage.classList.add('active-page');
+        else if (pageId === 'bug') bugPage.classList.add('active-page');
+        else if (pageId === 'tools') toolsPage.classList.add('active-page');
+        
+        navItems.forEach(function(item) {
+            if (item.getAttribute('data-page') === pageId) item.classList.add('active');
+            else item.classList.remove('active');
+        });
+        hideAllSubPages();
+    }
+
+    navItems.forEach(function(item) {
+        item.onclick = function() { setActivePage(this.getAttribute('data-page')); };
+    });
+
+    // SUB PAGES
+    const videoSubPage = document.getElementById('videoSubPage');
+    const aiSubPage = document.getElementById('aiSubPage');
+    const settingSubPage = document.getElementById('settingSubPage');
+    const musicSubPage = document.getElementById('musicSubPage');
+    const gamesSubPage = document.getElementById('gamesSubPage');
+    const quranSubPage = document.getElementById('quranSubPage');
+    
+    const cardVideoAnime = document.getElementById('cardVideoAnime');
+    const cardAI = document.getElementById('cardAI');
+    const cardSetting = document.getElementById('cardSetting');
+    const cardMusic = document.getElementById('cardMusic');
+    const cardSpam = document.getElementById('cardSpam');
+    const cardGames = document.getElementById('cardGames');
+    const cardQuran = document.getElementById('cardQuran');
+    
+    function hideAllSubPages() {
+        if(videoSubPage) videoSubPage.classList.remove('active-sub');
+        if(aiSubPage) aiSubPage.classList.remove('active-sub');
+        if(settingSubPage) settingSubPage.classList.remove('active-sub');
+        if(musicSubPage) musicSubPage.classList.remove('active-sub');
+        if(gamesSubPage) gamesSubPage.classList.remove('active-sub');
+        if(quranSubPage) quranSubPage.classList.remove('active-sub');
+        appPage.classList.remove('hidden');
+    }
+    function showSubPage(subPage) {
+        appPage.classList.add('hidden');
+        subPage.classList.add('active-sub');
+    }
+    
+    if(cardVideoAnime) cardVideoAnime.onclick = function() { showSubPage(videoSubPage); };
+    if(cardAI) cardAI.onclick = function() { showSubPage(aiSubPage); };
+    if(cardSetting) cardSetting.onclick = function() { showSubPage(settingSubPage); };
+    if(cardMusic) cardMusic.onclick = function() { showSubPage(musicSubPage); };
+    if(cardSpam) cardSpam.onclick = function() { window.location.href = "intent://APK_SPAM_OTP.rzz#Intent;package=APK_SPAM_OTP.rzz;end"; showMessage("Membuka APK_SPAM_OTP.rzz...", false); };
+    if(cardGames) cardGames.onclick = function() { showSubPage(gamesSubPage); };
+    if(cardQuran) cardQuran.onclick = function() { showSubPage(quranSubPage); };
+    
+    const backVideoBtn = document.getElementById('backVideoBtn');
+    const backAiBtn = document.getElementById('backAiBtn');
+    const backSettingBtn = document.getElementById('backSettingBtn');
+    const backMusicBtn = document.getElementById('backMusicBtn');
+    const backGamesBtn = document.getElementById('backGamesBtn');
+    const backQuranBtn = document.getElementById('backQuranBtn');
+    
+    if(backVideoBtn) backVideoBtn.onclick = hideAllSubPages;
+    if(backAiBtn) backAiBtn.onclick = hideAllSubPages;
+    if(backSettingBtn) backSettingBtn.onclick = hideAllSubPages;
+    if(backMusicBtn) backMusicBtn.onclick = hideAllSubPages;
+    if(backGamesBtn) backGamesBtn.onclick = hideAllSubPages;
+    if(backQuranBtn) backQuranBtn.onclick = hideAllSubPages;
+
+    // VIDEO SELECTOR
+    const videoIframe = document.getElementById('videoIframe');
+    const soundBtn = document.getElementById('soundBtn');
+    let isMuted = true;
+    if(soundBtn) {
+        soundBtn.onclick = function() {
+            isMuted = !isMuted;
+            let src = videoIframe.src.replace(/[?&]mute=\d/, '');
+            src += (src.includes('?') ? '&' : '?') + "mute=" + (isMuted ? 1 : 0);
+            videoIframe.src = src;
+            soundBtn.innerHTML = isMuted ? '🔇' : '🔊';
+        };
+    }
+    
+    document.querySelectorAll('.video-option-sub').forEach(function(opt) {
+        opt.onclick = function() {
+            videoIframe.src = "https://www.youtube.com/embed/" + this.getAttribute('data-video') + "?autoplay=1&mute=" + (isMuted ? 1 : 0) + "&loop=1&playlist=" + this.getAttribute('data-video');
+            showMessage("Video berhasil diganti!", false);
+            hideAllSubPages();
+        };
+    });
+
+    // AI CHAT
+    const waChatBody = document.getElementById('waChatBody');
+    function addMessageUser(text) { const div = document.createElement('div'); div.className = 'message-user'; div.innerHTML = text; waChatBody.appendChild(div); waChatBody.scrollTop = waChatBody.scrollHeight; }
+    function addMessageAI(text) { const div = document.createElement('div'); div.className = 'message-ai'; div.innerHTML = text; waChatBody.appendChild(div); waChatBody.scrollTop = waChatBody.scrollHeight; }
+    document.querySelectorAll('.quick-chat-btn').forEach(function(btn) {
+        btn.onclick = function() {
+            const msg = this.getAttribute('data-msg');
+            if (msg === "bug wa nya tidak berfungsi") { addMessageUser("BUG WA NYA TIDAK BERFUNGSI"); setTimeout(function() { addMessageAI("Maaf jika bug WA nya tidak berfungsi karena setelah saya cek API key APK nya sudah habis."); }, 500); }
+            else if (msg === "saya mau beli ai work di mana") { addMessageUser("SAYA MAU BELI AI WORK DI MANA"); setTimeout(function() { addMessageAI("Di DANZX STORE aja! Harga dana pelajar, fitur mantap."); }, 500); }
+            else if (msg === "bagaimana cara memakai bug nya") { addMessageUser("BAGAIMANA CARA MEMAKAI BUG NYA"); setTimeout(function() { addMessageAI("Kamu pencet icon tools, lalu pilih menu bug, masukkan nomor target."); }, 500); }
+        };
+    });
+
+    // SETTING WARNA
+    document.querySelectorAll('.color-btn').forEach(function(btn) {
+        btn.onclick = function() {
+            const color = this.getAttribute('data-color');
+            
+            document.querySelectorAll('.login-card, .tool-card, .bug-profile-card, .stat-card, .video-list-sub, .music-player-card, .music-item, .quran-item, .game-container, .setting-container, .custom-select, .input-group, .video-option-sub, .wa-chat-body, .message-ai, .quick-chat-btn, .carousel-img, .account-stats, .logout-btn, .back-btn, .sound-btn, .login-profile-img, .profile-photo, .sidebar, .menu-icon, .header-icon').forEach(function(el) {
+                if(el.style) {
+                    el.style.borderColor = color;
+                    el.style.boxShadow = '0 0 10px ' + color + ', 0 0 20px ' + color;
+                }
+            });
+            
+            document.querySelectorAll('.login-btn, .attack-btn, .game-btn, .sidebar-item').forEach(function(el) {
+                el.style.background = "linear-gradient(95deg, " + color + ", #c72a3a)";
+                el.style.boxShadow = '0 0 15px ' + color;
+            });
+            
+            document.querySelectorAll('.progress-fill, .music-num').forEach(function(el) {
+                el.style.background = color;
+                el.style.boxShadow = '0 0 5px ' + color;
+            });
+            
+            document.querySelectorAll('.message-user').forEach(function(el) {
+                el.style.background = "linear-gradient(95deg, " + color + ", #c72a3a)";
+                el.style.boxShadow = '0 0 10px ' + color;
+            });
+            
+            document.querySelectorAll('#cardAI .tool-icon svg circle').forEach(function(el) {
+                el.setAttribute('fill', color);
+            });
+            
+            document.querySelectorAll('.input-login-group input, .search-input').forEach(function(el) {
+                el.style.borderColor = color;
+            });
+            
+            showMessage("Warna tema berhasil diganti!", false);
+            hideAllSubPages();
+        };
+    });
+
+    // MUSIC PLAYER
+    const musicFrame = document.getElementById('musicFrame');
+    const musicTitle = document.getElementById('musicTitle');
+    const musicArtist = document.getElementById('musicArtist');
+    const currentTimeSpan = document.getElementById('currentTime');
+    const durationSpan = document.getElementById('duration');
+    const progressFill = document.getElementById('progressFill');
+    const progressBar = document.getElementById('progressBar');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const searchYoutube = document.getElementById('searchYoutube');
+    
+    let currentIndexMusic = 0;
+    let isPlayingMusic = true;
+    let currentProgress = 0;
+    let progressInterval;
+    
+    const musicPlaylist = [
+        { video: 'iduLOx_tJzc', name: 'Dj Breakbeat Atlantis X En Den Dino Remix Full Bass', artist: 'REYLIMITLESS', duration: 254 },
+        { video: '3eUQb-Kw_fE', name: 'DJ BABY DON\'T GO', artist: 'REYLIMITLESS', duration: 220 },
+        { video: 'c8vZCN62Sw4', name: 'DJ KASIH ABA ABA', artist: 'REYLIMITLESS', duration: 210 },
+        { video: 'OK_b2-w0u60', name: 'DJ ISTILAH KATA', artist: 'REYLIMITLESS', duration: 230 },
+        { video: 'vSSGYjItsNk', name: 'DJ JANGAN PERNAH', artist: 'REYLIMITLESS', duration: 240 },
+        { video: '4VVvXjmRk6g', name: 'DJ PELUKAN YANG HANGAT', artist: 'REYLIMITLESS', duration: 260 },
+        { video: '5Mc_GdSe55w', name: 'DJ SWEET LOVE X DINASTY 2', artist: 'REYLIMITLESS', duration: 245 },
+        { video: 'vJeDY1t40DU', name: 'DJ TAKUTU DON CAE CAE', artist: 'REYLIMITLESS', duration: 225 },
+        { video: '2ZIgUrlFvH8', name: 'DJ PICA PICA TIMUR KEBARAT', artist: 'REYLIMITLESS', duration: 235 },
+        { video: 'kkTGh8Ym_iI', name: 'DJ AISHITERU 2', artist: 'REYLIMITLESS', duration: 250 }
+    ];
+    
+    function formatTime(seconds) {
+        let mins = Math.floor(seconds / 60);
+        let secs = Math.floor(seconds % 60);
+        return mins + ":" + (secs < 10 ? "0" + secs : secs);
+    }
+    
+    function updateMusicProgress() {
+        if (progressFill) progressFill.style.width = (currentProgress / musicPlaylist[currentIndexMusic].duration) * 100 + '%';
+        if (currentTimeSpan) currentTimeSpan.textContent = formatTime(currentProgress);
+        if (durationSpan) durationSpan.textContent = formatTime(musicPlaylist[currentIndexMusic].duration);
+    }
+    
+    function playMusic(index) {
+        const song = musicPlaylist[index];
+        currentIndexMusic = index;
+        currentProgress = 0;
+        if (musicTitle) musicTitle.textContent = song.name;
+        if (musicArtist) musicArtist.textContent = song.artist;
+        if (musicFrame) musicFrame.src = "https://www.youtube.com/embed/" + song.video + "?autoplay=1";
+        updateMusicProgress();
+        if (!isMuted && soundBtn) soundBtn.click();
+        isPlayingMusic = true;
+        if (playPauseBtn) playPauseBtn.innerHTML = '⏸';
+        if (progressInterval) clearInterval(progressInterval);
+        progressInterval = setInterval(function() {
+            if (isPlayingMusic && currentProgress < song.duration) {
+                currentProgress++;
+                updateMusicProgress();
+            } else if (currentProgress >= song.duration) {
+                playMusic((currentIndexMusic + 1) % musicPlaylist.length);
+            }
+        }, 1000);
+        
+        document.querySelectorAll('.music-item').forEach(function(item, idx) {
+            if (idx === currentIndexMusic) {
+                item.style.borderColor = '#ff3b4a';
+                item.style.background = 'rgba(255,59,74,0.2)';
+            } else {
+                item.style.borderColor = 'rgba(255,59,74,0.3)';
+                item.style.background = 'rgba(18,22,32,0.9)';
+            }
+        });
+    }
+    
+    if(playPauseBtn) {
+        playPauseBtn.onclick = function() {
+            if (isPlayingMusic) {
+                if (musicFrame) musicFrame.src = musicFrame.src.replace('autoplay=1', 'autoplay=0');
+                playPauseBtn.innerHTML = '▶';
+                if (progressInterval) clearInterval(progressInterval);
+            } else {
+                if (musicFrame) musicFrame.src = musicFrame.src.replace('autoplay=0', 'autoplay=1');
+                playPauseBtn.innerHTML = '⏸';
+                progressInterval = setInterval(function() {
+                    if (isPlayingMusic && currentProgress < musicPlaylist[currentIndexMusic].duration) {
+                        currentProgress++;
+                        updateMusicProgress();
+                    } else if (currentProgress >= musicPlaylist[currentIndexMusic].duration) {
+                        playMusic((currentIndexMusic + 1) % musicPlaylist.length);
+                    }
+                }, 1000);
+            }
+            isPlayingMusic = !isPlayingMusic;
+        };
+    }
+    
+    if(prevBtn) prevBtn.onclick = function() { playMusic((currentIndexMusic - 1 + musicPlaylist.length) % musicPlaylist.length); };
+    if(nextBtn) nextBtn.onclick = function() { playMusic((currentIndexMusic + 1) % musicPlaylist.length); };
+    
+    if(progressBar) {
+        progressBar.onclick = function(e) {
+            const rect = progressBar.getBoundingClientRect();
+            const percent = (e.clientX - rect.left) / rect.width;
+            currentProgress = percent * musicPlaylist[currentIndexMusic].duration;
+            updateMusicProgress();
+        };
+    }
+    
+    document.querySelectorAll('.music-item').forEach(function(item, idx) {
+        item.onclick = function() { playMusic(idx); };
+    });
+    
+    if(searchYoutube) {
+        searchYoutube.onkeypress = function(e) {
+            if (e.key === 'Enter') window.open('https://www.youtube.com/results?search_query=' + encodeURIComponent(this.value.trim()), '_blank');
+        };
+    }
+    
+    playMusic(0);
+
+    // GAMES
+    let secretNumber = Math.floor(Math.random() * 100) + 1;
+    let score = 0;
+    let attempts = 0;
+    const scoreSpan = document.getElementById('score');
+    const gameNumber = document.getElementById('gameNumber');
+    const guessInput = document.getElementById('guessInput');
+    const guessBtn = document.getElementById('guessBtn');
+    const resetGameBtn = document.getElementById('resetGameBtn');
+    const gameMessage = document.getElementById('gameMessage');
+    
+    function updateGameMessage(msg, isError) {
+        gameMessage.innerHTML = msg;
+        gameMessage.style.color = isError ? '#ff8a96' : '#a0f0c0';
+    }
+    
+    if(guessBtn) {
+        guessBtn.onclick = function() {
+            let guess = parseInt(guessInput.value);
+            if (isNaN(guess)) { updateGameMessage("Masukkan angka yang valid!", true); return; }
+            attempts++;
+            if (guess === secretNumber) {
+                score += 10;
+                scoreSpan.textContent = score;
+                updateGameMessage("🎉 BENAR! Angkanya " + secretNumber + ". Skor +10! Tekan RESET untuk main lagi.");
+                gameNumber.textContent = secretNumber;
+                secretNumber = Math.floor(Math.random() * 100) + 1;
+                guessInput.value = '';
+            } else if (guess < secretNumber) {
+                updateGameMessage("📉 Tebakan terlalu kecil! Coba lagi. (Percobaan: " + attempts + ")");
+            } else {
+                updateGameMessage("📈 Tebakan terlalu besar! Coba lagi. (Percobaan: " + attempts + ")");
+            }
+        };
+    }
+    
+    if(resetGameBtn) {
+        resetGameBtn.onclick = function() {
+            secretNumber = Math.floor(Math.random() * 100) + 1;
+            attempts = 0;
+            guessInput.value = '';
+            gameNumber.textContent = '?';
+            updateGameMessage("Game direset! Tebak angka 1-100");
+        };
+    }
+
+    // AL-QUR'AN
+    const surahContent = document.getElementById('surahContent');
+    const quranData = {
+        'al-fatihah': { arab: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ\nالْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ\nالرَّحْمَٰنِ الرَّحِيمِ\nمَالِكِ يَوْمِ الدِّينِ\nإِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ\nاهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ\nصِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ', latin: 'Bismillahirrahmanirrahim. Alhamdu lillahi rabbil \'alamin. Arrahmanirrahim. Maliki yaumiddin. Iyyaka na\'budu wa iyyaka nasta\'in. Ihdinas shiratal mustaqim. Shiratal ladzina an\'amta \'alaihim ghairil maghdhubi \'alaihim wa lad dhallin.', arti: 'Dengan nama Allah Yang Maha Pengasih, Maha Penyayang. Segala puji bagi Allah, Tuhan seluruh alam. Yang Maha Pengasih, Maha Penyayang. Pemilik hari pembalasan. Hanya kepada Engkaulah kami menyembah dan hanya kepada Engkaulah kami memohon pertolongan. Tunjukilah kami jalan yang lurus. (Yaitu) jalan orang-orang yang telah Engkau beri nikmat, bukan (jalan) mereka yang dimurkai dan bukan (pula jalan) mereka yang sesat.' },
+        'an-nas': { arab: 'قُلْ أَعُوذُ بِرَبِّ النَّاسِ\nمَلِكِ النَّاسِ\nإِلَٰهِ النَّاسِ\nمِنْ شَرِّ الْوَسْوَاسِ الْخَنَّاسِ\nالَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ\nمِنَ الْجِنَّةِ وَالنَّاسِ', latin: 'Qul a\'udzu birabbinnas. Malikin nas. Ilahin nas. Min syarril waswasil khannas. Alladzi yuwaswisu fi sudurin nas. Minal jinnati wan nas.', arti: 'Katakanlah, "Aku berlindung kepada Tuhan manusia, Raja manusia, Sembahan manusia, dari kejahatan (bisikan) setan yang bersembunyi, yang membisikkan (kejahatan) ke dalam dada manusia, dari (golongan) jin dan manusia."' },
+        'al-falaq': { arab: 'قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ\nمِنْ شَرِّ مَا خَلَقَ\nوَمِنْ شَرِّ غَاسِقٍ إِذَا وَقَبَ\nوَمِنْ شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ\nوَمِنْ شَرِّ حَاسِدٍ إِذَا حَسَدَ', latin: 'Qul a\'udzu birabbil falaq. Min syarri ma khalaq. Wa min syarri ghasiqin idza waqab. Wa min syarrin naffatsati fil \'uqad. Wa min syarri hasidin idza hasad.', arti: 'Katakanlah, "Aku berlindung kepada Tuhan yang menguasai subuh, dari kejahatan (makhluk yang) Dia ciptakan, dari kejahatan malam apabila telah gelap gulita, dari kejahatan (perempuan-perempuan) penyihir yang meniup pada buhul-buhul (talinya), dan dari kejahatan orang yang dengki apabila dia dengki."' },
+        'al-ikhlas': { arab: 'قُلْ هُوَ اللَّهُ أَحَدٌ\nاللَّهُ الصَّمَدُ\nلَمْ يَلِدْ وَلَمْ يُولَدْ\nوَلَمْ يَكُنْ لَهُ كُفُوًا أَحَدٌ', latin: 'Qul huwallahu ahad. Allahus shamad. Lam yalid wa lam yulad. Wa lam yakullahu kufuwan ahad.', arti: 'Katakanlah (Muhammad), "Dialah Allah, Yang Maha Esa. Allah adalah Tuhan yang bergantung kepada-Nya segala sesuatu. Dia tidak beranak dan tidak diperanakkan. Dan tidak ada sesuatu yang setara dengan Dia."' },
+        'al-kafirun': { arab: 'قُلْ يَا أَيُّهَا الْكَافِرُونَ\nلَا أَعْبُدُ مَا تَعْبُدُونَ\nوَلَا أَنْتُمْ عَابِدُونَ مَا أَعْبُدُ\nوَلَا أَنَا عَابِدٌ مَا عَبَدْتُّمْ\nوَلَا أَنْتُمْ عَابِدُونَ مَا أَعْبُدُ\nلَكُمْ دِينُكُمْ وَلِيَ دِينِ', latin: 'Qul ya ayyuhal kafirun. La a\'budu ma ta\'budun. Wa la antum \'abiduna ma a\'bud. Wa la ana \'abidun ma \'abattum. Wa la antum \'abiduna ma a\'bud. Lakum dinukum wa liyadin.', arti: 'Katakanlah (Muhammad), "Wahai orang-orang kafir! Aku tidak akan menyembah apa yang kamu sembah, dan kamu bukan penyembah apa yang aku sembah, dan aku tidak pernah menjadi penyembah apa yang kamu sembah, dan kamu tidak pernah (pula) menjadi penyembah apa yang aku sembah. Untukmu agamamu, dan untukku agamaku."' }
+    };
+    
+    document.querySelectorAll('.quran-item').forEach(function(item) {
+        item.onclick = function() {
+            const surah = this.getAttribute('data-surah');
+            const data = quranData[surah];
+            if (data && surahContent) {
+                surahContent.style.display = 'block';
+                surahContent.innerHTML = '<div class="surah-arab">' + data.arab + '</div><div class="surah-latin">' + data.latin + '</div><div class="surah-arti">' + data.arti + '</div>';
+            }
+        };
+    });
+
+    // CUSTOM SELECT BUG
+    const customSelect = document.getElementById('customSelect');
+    const selectOptions = document.getElementById('selectOptions');
+    const selectedBugText = document.getElementById('selectedBugText');
+    if(customSelect) {
+        customSelect.onclick = function(e) {
+            e.stopPropagation();
+            selectOptions.classList.toggle('show');
+        };
+    }
+    document.querySelectorAll('.select-option').forEach(function(opt) {
+        opt.onclick = function() {
+            if(selectedBugText) selectedBugText.innerHTML = this.getAttribute('data-value');
+            if(selectOptions) selectOptions.classList.remove('show');
+        };
+    });
+    document.onclick = function() { if(selectOptions) selectOptions.classList.remove('show'); };
+
+    // ATTACK BUG
+    const attackBtn = document.getElementById('attackBtn');
+    const targetInput = document.getElementById('targetNumber');
+    const resultMsg = document.getElementById('resultMsg');
+    function showMessage(text, isError) {
+        if(resultMsg) {
+            resultMsg.style.display = 'block';
+            resultMsg.innerText = text;
+            resultMsg.style.color = isError ? '#ffa098' : '#a0f0c0';
+            setTimeout(function() { resultMsg.style.display = 'none'; }, 2500);
+        }
+    }
+    if(attackBtn) {
+        attackBtn.onclick = function() {
+            let target = targetInput.value.trim();
+            if (target === "") return showMessage("Masukkan nomor target!", true);
+            showMessage("BUG TERKIRIM KE " + target.substring(0,4) + "*******", false);
+        };
+    }
+
+    // UPDATE STATS
+    function updateStats() {
+        const onlineSpan = document.getElementById('onlineUsers');
+        const connSpan = document.getElementById('connections');
+        if (onlineSpan && connSpan) {
+            onlineSpan.innerText = 120 + Math.floor(Math.random() * 80);
+            connSpan.innerText = 700 + Math.floor(Math.random() * 400);
+        }
+    }
+    setInterval(updateStats, 8000);
+</script>
+</body>
+</html>
